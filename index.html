@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File List</title>
+</head>
+<body>
+    <h1>Files in Repository</h1>
+    <ul id="file-list"></ul>
+
+    <script>
+        const repoOwner = 'nothua';
+        const repoName = 'cdn';
+        const branch = 'main'; // or 'master' or any other branch
+
+        async function fetchFiles() {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/${branch}?recursive=1`);
+            const data = await response.json();
+            return data.tree.filter(item => item.type === 'blob');
+        }
+
+        function createDownloadLink(path) {
+            return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/${path}`;
+        }
+
+        async function displayFiles() {
+            const fileList = document.getElementById('file-list');
+            const files = await fetchFiles();
+
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = createDownloadLink(file.path);
+                link.textContent = file.path;
+                link.download = file.path;
+                listItem.appendChild(link);
+                fileList.appendChild(listItem);
+            });
+        }
+
+        displayFiles();
+    </script>
+</body>
+</html>
