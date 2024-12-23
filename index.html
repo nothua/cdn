@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File List</title>
+    <title>CDN notHua</title>
+    <style>
+        ul {
+            list-style-type: none;
+        }
+        ul ul {
+            margin-left: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>Files in Repository</h1>
-    <ul id="file-list"></ul>
+    <div id="file-list"></div>
 
     <script>
         const repoOwner = 'nothua';
@@ -24,19 +32,52 @@
             return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/${path}`;
         }
 
+        function buildFileTree(files) {
+            const fileTree = {};
+
+            files.forEach(file => {
+                const parts = file.path.split('/');
+                let current = fileTree;
+
+                parts.forEach((part, index) => {
+                    if (!current[part]) {
+                        current[part] = index === parts.length - 1 ? createDownloadLink(file.path) : {};
+                    }
+                    current = current[part];
+                });
+            });
+
+            return fileTree;
+        }
+
+        function renderFileTree(container, tree) {
+            const ul = document.createElement('ul');
+
+            Object.keys(tree).forEach(key => {
+                const li = document.createElement('li');
+
+                if (typeof tree[key] === 'string') {
+                    const link = document.createElement('a');
+                    link.href = tree[key];
+                    link.textContent = key;
+                    link.download = key;
+                    li.appendChild(link);
+                } else {
+                    li.textContent = key;
+                    renderFileTree(li, tree[key]);
+                }
+
+                ul.appendChild(li);
+            });
+
+            container.appendChild(ul);
+        }
+
         async function displayFiles() {
             const fileList = document.getElementById('file-list');
             const files = await fetchFiles();
-
-            files.forEach(file => {
-                const listItem = document.createElement('li');
-                const link = document.createElement('a');
-                link.href = createDownloadLink(file.path);
-                link.textContent = file.path;
-                link.download = file.path;
-                listItem.appendChild(link);
-                fileList.appendChild(listItem);
-            });
+            const fileTree = buildFileTree(files);
+            renderFileTree(fileList, fileTree);
         }
 
         displayFiles();
